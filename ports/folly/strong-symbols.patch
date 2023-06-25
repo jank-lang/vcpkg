@@ -1,0 +1,23 @@
+diff --git a/CMake/folly-config.h.cmake b/CMake/folly-config.h.cmake
+index ce5649d55..db715f84c 100644
+--- a/CMake/folly-config.h.cmake
++++ b/CMake/folly-config.h.cmake
+@@ -59,7 +59,7 @@
+ #cmakedefine FOLLY_HAVE_STD__IS_TRIVIALLY_COPYABLE 1
+ #cmakedefine FOLLY_HAVE_UNALIGNED_ACCESS 1
+ #cmakedefine FOLLY_HAVE_VLA 1
+-#cmakedefine01 FOLLY_HAVE_WEAK_SYMBOLS
++#cmakedefine FOLLY_HAVE_WEAK_SYMBOLS 0
+ #cmakedefine FOLLY_HAVE_LINUX_VDSO 1
+ #cmakedefine FOLLY_HAVE_MALLOC_USABLE_SIZE 1
+ #cmakedefine FOLLY_HAVE_INT128_T 1
+diff --git a/CMake/folly-deps.cmake b/CMake/folly-deps.cmake
+index 989259a87..9f212f539 100644
+--- a/CMake/folly-deps.cmake
++++ b/CMake/folly-deps.cmake
+@@ -312,4 +312,5 @@ target_link_libraries(folly_deps INTERFACE
+   ${FOLLY_LINK_LIBRARIES}
+   ${FOLLY_SHINY_DEPENDENCIES}
+   ${FOLLY_ASAN_FLAGS}
++  jemalloc
+ )
