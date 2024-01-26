@@ -7,7 +7,7 @@ index 066d19e..5151135 100644
  #cmakedefine FOLLY_HAVE_LIBGLOG 1
 
 -#cmakedefine FOLLY_USE_JEMALLOC 1
-+#cmakedefine FOLLY_USE_JEMALLOC 0
++#define FOLLY_USE_JEMALLOC 0
 
  #if __has_include(<features.h>)
  #include <features.h>
