@@ -19,6 +19,7 @@ vcpkg_from_github(
         fix-deps.patch
         openssl.patch # from https://github.com/facebook/folly/pull/2016
         strong-symbols.patch
+        no-jemalloc.patch
 )
 
 file(REMOVE "${SOURCE_PATH}/CMake/FindFmt.cmake")

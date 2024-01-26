@@ -1,0 +1,13 @@
+diff --git a/CMake/folly-config.h.cmake b/CMake/folly-config.h.cmake
+index 066d19e..5151135 100644
+--- a/CMake/folly-config.h.cmake
++++ b/CMake/folly-config.h.cmake
+@@ -39,7 +39,7 @@
+
+ #cmakedefine FOLLY_HAVE_LIBGLOG 1
+
+-#cmakedefine FOLLY_USE_JEMALLOC 1
++#cmakedefine FOLLY_USE_JEMALLOC 0
+
+ #if __has_include(<features.h>)
+ #include <features.h>
