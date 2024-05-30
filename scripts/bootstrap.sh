@@ -102,60 +102,25 @@ fi
 
 if [ "$UNAME" = "OpenBSD" ]; then
     vcpkgUseSystem="ON"
-
-    if [ -z "$CXX" ]; then
-        CXX=/usr/bin/clang++
-    fi
-    if [ -z "$CC" ]; then
-        CC=/usr/bin/clang
-    fi
 fi
 
 if [ "$vcpkgUseSystem" = "ON" ]; then
     vcpkgCheckRepoTool cmake
     vcpkgCheckRepoTool ninja
     vcpkgCheckRepoTool git
-    vcpkgCheckRepoTool gcc
 fi
 
-# Determine what we are going to do to bootstrap:
-# MacOS -> Download vcpkg-macos
-# Linux
-#   useMuslC -> download vcpkg-muslc
-#   amd64 -> download vcpkg-glibc
-# Otherwise
-#   Download and build from source
-
-# Choose the vcpkg binary to download
-vcpkgDownloadTool="ON"
-vcpkgToolReleaseTag="2023-06-15"
-if [ "$UNAME" = "Darwin" ]; then
-    echo "Downloading vcpkg-macos..."
-    vcpkgToolReleaseSha="3a746ca1402b5ac6cd26d09077681c4f8d1090a06ed4243574d81bcff22d651eae5a47107b407828bfa36236f2c4c02d3e2c6392d92b8c5aaf9992f332091f35"
-    vcpkgToolName="vcpkg-macos"
-elif [ "$vcpkgUseMuslC" = "ON" ]; then
-    echo "Downloading vcpkg-muslc..."
-    vcpkgToolReleaseSha="0426668fbfaece4f51798c1ee201ffbc26b0b239e212ce6118b2ab5d2490b414a01e725b05ce98c8a95d06341a70405f4223bd4f42e291c5792ec2a631e22cc1"
-    vcpkgToolName="vcpkg-muslc"
-elif [ "$ARCH" = "x86_64" ]; then
-    echo "Downloading vcpkg-glibc..."
-    vcpkgToolReleaseSha="4c49238277cecc81cf0a152f9505e4020290e25ada736ec8ff956f740e5e4b986a9e5c3cc0816f4c9ccde06639cb5275d57ea86818060573fa246d019ef835f8"
-    vcpkgToolName="vcpkg-glibc"
-else
-    echo "Unable to determine a binary release of vcpkg; attempting to build from source."
-    vcpkgDownloadTool="OFF"
-    vcpkgToolReleaseSha="05c50173959634a4557b756fce78f92bbc38bf23c91d4c41368c24f91e9479966fb4537a391cee2141423edd6cf84ca488c9e1d57323aa65575baa0ecc6af8e3"
-fi
-
-# Do the download or build.
 vcpkgCheckEqualFileHash()
 {
     url=$1; filePath=$2; expectedHash=$3
 
     if command -v "sha512sum" >/dev/null 2>&1 ; then
         actualHash=$(sha512sum "$filePath")
+    elif command -v "gsha512sum" >/dev/null 2>&1 ; then
+        # OpenBSD's coreutil's sha512sum is prefixed with a `g`
+        actualHash=$(gsha512sum "$filePath")
     else
-        # sha512sum is not available by default on osx
+        # [g]sha512sum is not available by default on osx
         # shasum is not available by default on Fedora
         actualHash=$(shasum -a 512 "$filePath")
     fi
@@ -193,37 +158,47 @@ vcpkgExtractTar()
     mv "$toPath.partial" "$toPath"
 }
 
-if [ "$vcpkgDownloadTool" = "ON" ]; then
-    vcpkgDownloadFile "https://github.com/microsoft/vcpkg-tool/releases/download/$vcpkgToolReleaseTag/$vcpkgToolName" "$vcpkgRootDir/vcpkg" $vcpkgToolReleaseSha
-else
-    if [ "x$CXX" = "x" ]; then
-        if which g++-12 >/dev/null 2>&1; then
-            CXX=g++-12
-        elif which g++-11 >/dev/null 2>&1; then
-            CXX=g++-11
-        elif which g++-10 >/dev/null 2>&1; then
-            CXX=g++-10
-        elif which g++-9 >/dev/null 2>&1; then
-            CXX=g++-9
-        elif which g++-8 >/dev/null 2>&1; then
-            CXX=g++-8
-        elif which g++-7 >/dev/null 2>&1; then
-            CXX=g++-7
-        elif which g++-6 >/dev/null 2>&1; then
-            CXX=g++-6
-        elif which g++ >/dev/null 2>&1; then
-            CXX=g++
-        fi
-        # If we can't find g++, allow CMake to do the look-up
-    fi
+# Determine what we are going to do to bootstrap:
+# MacOS -> Download vcpkg-macos
+# Linux
+#   useMuslC -> download vcpkg-muslc
+#   amd64 -> download vcpkg-glibc
+# Otherwise
+#   Download and build from source
 
-    vcpkgToolReleaseTarball="$vcpkgToolReleaseTag.tar.gz"
+# Read the vcpkg-tool config file to determine what release to download
+. "$vcpkgRootDir/scripts/vcpkg-tool-metadata.txt"
+
+vcpkgDownloadTool="ON"
+if [ "$UNAME" = "Darwin" ]; then
+    echo "Downloading vcpkg-macos..."
+    vcpkgToolReleaseSha=$VCPKG_MACOS_SHA
+    vcpkgToolName="vcpkg-macos"
+elif [ "$vcpkgUseMuslC" = "ON" ]; then
+    echo "Downloading vcpkg-muslc..."
+    vcpkgToolReleaseSha=$VCPKG_MUSLC_SHA
+    vcpkgToolName="vcpkg-muslc"
+elif [ "$ARCH" = "x86_64" ]; then
+    echo "Downloading vcpkg-glibc..."
+    vcpkgToolReleaseSha=$VCPKG_GLIBC_SHA
+    vcpkgToolName="vcpkg-glibc"
+else
+    echo "Unable to determine a binary release of vcpkg; attempting to build from source."
+    vcpkgDownloadTool="OFF"
+    vcpkgToolReleaseSha=$VCPKG_TOOL_SOURCE_SHA
+fi
+
+# Do the download or build.
+if [ "$vcpkgDownloadTool" = "ON" ]; then
+    vcpkgDownloadFile "https://github.com/microsoft/vcpkg-tool/releases/download/$VCPKG_TOOL_RELEASE_TAG/$vcpkgToolName" "$vcpkgRootDir/vcpkg" $vcpkgToolReleaseSha
+else
+    vcpkgToolReleaseTarball="$VCPKG_TOOL_RELEASE_TAG.tar.gz"
     vcpkgToolUrl="https://github.com/microsoft/vcpkg-tool/archive/$vcpkgToolReleaseTarball"
     baseBuildDir="$vcpkgRootDir/buildtrees/_vcpkg"
     buildDir="$baseBuildDir/build"
     tarballPath="$downloadsDir/$vcpkgToolReleaseTarball"
     srcBaseDir="$baseBuildDir/src"
-    srcDir="$srcBaseDir/vcpkg-tool-$vcpkgToolReleaseTag"
+    srcDir="$srcBaseDir/vcpkg-tool-$VCPKG_TOOL_RELEASE_TAG"
 
     if [ -e "$tarballPath" ]; then
         vcpkgCheckEqualFileHash "$vcpkgToolUrl" "$tarballPath" "$vcpkgToolReleaseSha"
@@ -242,12 +217,14 @@ else
         cmakeConfigOptions=" $cmakeConfigOptions '-DCMAKE_JOB_POOL_COMPILE:STRING=compile' '-DCMAKE_JOB_POOL_LINK:STRING=link' '-DCMAKE_JOB_POOLS:STRING=compile=$VCPKG_MAX_CONCURRENCY;link=$VCPKG_MAX_CONCURRENCY' "
     fi
 
-    (cd "$buildDir" && CXX="$CXX" eval cmake "$srcDir" $cmakeConfigOptions) || exit 1
+    (cd "$buildDir" && eval cmake "$srcDir" $cmakeConfigOptions) || exit 1
     (cd "$buildDir" && cmake --build .) || exit 1
 
     rm -rf "$vcpkgRootDir/vcpkg"
     cp "$buildDir/vcpkg" "$vcpkgRootDir/"
 fi
+
+"$vcpkgRootDir/vcpkg" version --disable-metrics
 
 # Apply the disable-metrics marker file.
 if [ "$vcpkgDisableMetrics" = "ON" ]; then

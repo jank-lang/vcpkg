@@ -1,11 +1,9 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO ivmai/bdwgc
-    REF 8b0452b5106c47cf27b4eb32a2adfa4fadc0213e
-    SHA512 0b7e66a22c1955961b5dd3c8e1f643208a4611445611acaffc6e3f373d679a5adb0a2c02212570ab8c0a70747c3a3172fbbc876c0a7eecc88292b489e1c186b0
+    REF "v${VERSION}"
+    SHA512 764ab0c0f29a30ba0d55c8f1f6e267ab3190e8bcb96b7a31f2488f3936c6e0d08020a329dd296cf7d491ba8d4158fa73df6a6d2b4242526535a732f20c3f1bd0
     HEAD_REF master
-    PATCHES
-      constexpr.patch
 )
 
 vcpkg_cmake_configure(
@@ -25,4 +23,4 @@ file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
 vcpkg_fixup_pkgconfig()
 
-file(INSTALL "${SOURCE_PATH}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
+file(INSTALL "${SOURCE_PATH}/README.QUICK" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)

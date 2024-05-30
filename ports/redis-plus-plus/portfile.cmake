@@ -2,7 +2,7 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO sewenew/redis-plus-plus
     REF "${VERSION}"
-    SHA512 a9afecc4059155137d524542e7ad699f78e5efc8b1136c1aac093e60fe70dddede3594afe6920f813ba011fb61740bec09b3564c8f8f42118e21fdd5f40f6161
+    SHA512 ad6a26d3466d45daa70f2bb43e28d76c07a15ddb1a3d667d10cc5201951e7b7ee56baf084dc9653f78679a2e6756ba7f66b1e71daa5dd8e19c4699fa59c2f1d8
     HEAD_REF master
     PATCHES
         fix-conversion.patch
@@ -49,6 +49,13 @@ vcpkg_cmake_install()
 vcpkg_copy_pdbs()
 
 vcpkg_cmake_config_fixup(PACKAGE_NAME redis++ CONFIG_PATH share/cmake/redis++)
+
+if("async" IN_LIST FEATURES)
+    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/share/redis++/redis++-config.cmake"
+"include(CMakeFindDependencyMacro)"
+[[include(CMakeFindDependencyMacro)
+find_dependency(libuv CONFIG)]])
+endif()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/share")

@@ -9,15 +9,14 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO facebook/folly
     REF "v${VERSION}"
-    SHA512 8be640c0b87c85929aa0af2e147ef9556e24f777d80dc7d06019b7edc9b5738635ad3db9dea94f99f1a9eb7eb48e91d78a42d08bcb19b98a279fb805da41bf82
+    SHA512 2121fb7afb2b1fa0f477537281566cfe6cfbe2c921fdde686b4201883f9406fd55f33fa3acfe70fe913c8c890b1bb3b7b74792998143b00e0f87f69d726c6f13
     HEAD_REF main
     PATCHES
-        reorder-glog-gflags.patch
         disable-non-underscore-posix-names.patch
-        boost-1.70.patch
         fix-windows-minmax.patch
         fix-deps.patch
-        openssl.patch # from https://github.com/facebook/folly/pull/2016
+        disable-uninitialized-resize-on-new-stl.patch
+        fix-unistd-include.patch
         strong-symbols.patch
 )
 
@@ -31,6 +30,7 @@ file(REMOVE "${SOURCE_PATH}/build/fbcode_builder/CMake/FindGMock.cmake")
 file(REMOVE "${SOURCE_PATH}/build/fbcode_builder/CMake/FindGflags.cmake")
 file(REMOVE "${SOURCE_PATH}/build/fbcode_builder/CMake/FindGlog.cmake")
 file(REMOVE "${SOURCE_PATH}/build/fbcode_builder/CMake/FindLibEvent.cmake")
+file(REMOVE "${SOURCE_PATH}/build/fbcode_builder/CMake/FindLibUnwind.cmake")
 file(REMOVE "${SOURCE_PATH}/build/fbcode_builder/CMake/FindSodium.cmake")
 file(REMOVE "${SOURCE_PATH}/build/fbcode_builder/CMake/FindZstd.cmake")
 
@@ -44,6 +44,7 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
         "zlib"       CMAKE_REQUIRE_FIND_PACKAGE_ZLIB
         "liburing"   WITH_liburing
+        "libaio"     WITH_libaio
     INVERTED_FEATURES
         "bzip2"      CMAKE_DISABLE_FIND_PACKAGE_BZip2
         "lzma"       CMAKE_DISABLE_FIND_PACKAGE_LibLZMA
@@ -59,12 +60,9 @@ vcpkg_cmake_configure(
         -DMSVC_USE_STATIC_RUNTIME=${MSVC_USE_STATIC_RUNTIME}
         -DCMAKE_DISABLE_FIND_PACKAGE_LibDwarf=ON
         -DCMAKE_DISABLE_FIND_PACKAGE_Libiberty=ON
-        -DCMAKE_DISABLE_FIND_PACKAGE_LibAIO=ON
-        -DLIBAIO_FOUND=OFF
         -DCMAKE_INSTALL_DIR=share/folly
         ${FEATURE_OPTIONS}
     MAYBE_UNUSED_VARIABLES
-        LIBAIO_FOUND
         MSVC_USE_STATIC_RUNTIME
 )
 
